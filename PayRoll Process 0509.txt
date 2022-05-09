@@ -1245,7 +1245,7 @@ Private Sub Resource(weekending As String, startr As Integer, endr As Integer, l
     Dim agencyFileName As String, subjectLine As String, sendTo As String
     agencyFileName = "book4xls-resource agency"
     subjectLine = "Resource Agency-WE: " & weekending
-    sendTo = "mariela.sandoval@resourceemployment.com;lizette.guzman@resourceemployment.com"
+    sendTo = "mariela.sandoval@resourceemployment.com;caroline.mcmillan@resourceemployment.com"
     
     Sheets("Resource FINAL").Activate
     create_email agencyFileName, subjectLine, weekending, sendTo
