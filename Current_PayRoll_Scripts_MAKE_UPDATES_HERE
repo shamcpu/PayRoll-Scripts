@@ -256,7 +256,7 @@ Public Sub MAIN_PROCEDURE()
     
     
     'Save final analysis as an .xlsx in Suzette's folder
-   ' ActiveWorkbook.SaveAs FileName:="C:\Users\" & userName & "\Documents\ALL AGENCIES - Weekly Payroll\All Agencies-WE " & weekendingWithPeriods, FileFormat:=51
+    ActiveWorkbook.SaveAs FileName:="C:\Users\" & userName & "\Documents\ALL AGENCIES - Weekly Payroll\All Agencies-WE " & weekendingWithPeriods, FileFormat:=51
     
 End Sub
 
@@ -461,11 +461,11 @@ Private Sub ACS(weekending As String, startRow As Integer, endRow As Integer, _
     Sheets("ACS FINAL").Activate
     
     
-'    Dim subjectLine As String, FileName As String, sendTo As String
-'    subjectLine = "ACS Staffing Agency WE: " & weekending
-'    FileName = "ACS Agency Weekly Hours"
-'    sendTo = "lgarcia@acsstaffinginc.com;eduarte@acsstaffinginc.com;mrivera@acsstaffinginc.com"
-'    create_email FileName, subjectLine, weekending, sendTo
+    Dim subjectLine As String, FileName As String, sendTo As String
+    subjectLine = "ACS Staffing Agency WE: " & weekending
+    FileName = "ACS Agency Weekly Hours"
+    sendTo = "lgarcia@acsstaffinginc.com;eduarte@acsstaffinginc.com;mrivera@acsstaffinginc.com"
+    create_email FileName, subjectLine, weekending, sendTo
     
 End Sub
 
@@ -553,7 +553,7 @@ Private Sub create_email(agencyFileName As String, subjectLine As String, weeken
                     .Attachments.Add Destwb.FullName
                     'You can add other files also like this
                     '.Attachments.Add ("C:\test.txt")
-                    .Display   'or use .Display
+                    .DISPLAY   'or use .Display
                 End With
             On Error GoTo 0
             .Close savechanges:=False
@@ -580,7 +580,7 @@ Private Sub create_email(agencyFileName As String, subjectLine As String, weeken
                     .Attachments.Add Destwb2.FullName
                     'You can add other files also like this
                     '.Attachments.Add ("C:\test.txt")
-                    .Display   'or use .Display
+                    .DISPLAY   'or use .Display
                 End With
                 On Error GoTo 0
                 .Close savechanges:=False
@@ -748,11 +748,11 @@ Private Sub JAM(weekending As String, startRow As Integer, endRow As Integer, la
     'Hide columns
     columns("F:G").Hidden = True
     
-'    Dim subjectLine As String, FileName As String, sendTo As String
-'    subjectLine = "JAM Staffing-WE: " & weekending
-'    FileName = "JAM Staffing"
-'    sendTo = "jennifer@onlinetruckinginc.com;dalia@onlinetruckinginc.com;jaime@onlinetruckinginc.com"
-'    create_email FileName, subjectLine, weekending, sendTo
+    Dim subjectLine As String, FileName As String, sendTo As String
+    subjectLine = "JAM Staffing-WE: " & weekending
+    FileName = "JAM Staffing"
+    sendTo = "jennifer@onlinetruckinginc.com;dalia@onlinetruckinginc.com;jaime@onlinetruckinginc.com"
+    create_email FileName, subjectLine, weekending, sendTo
     
 End Sub
 Private Sub OneWay(weekending As String, startr As Integer, endr As Integer, lastPivotRow As Integer, _
@@ -910,11 +910,11 @@ Private Sub OneWay(weekending As String, startr As Integer, endr As Integer, las
     columns("F:G").Hidden = True
     columns("I").Hidden = True
     
-'    Dim subjectLine As String, FileName As String, sendTo As String
-'    subjectLine = "Oneway Staffing WE: " & weekending
-'    FileName = "Oneway Staffing Weekly Hours"
-'    sendTo = "yaniras@onewaystaffing.net;arodriguez@onewaystaffing.net;jperez@alternacs.com"
-'    create_email FileName, subjectLine, weekending, sendTo
+    Dim subjectLine As String, FileName As String, sendTo As String
+    subjectLine = "Oneway Staffing WE: " & weekending
+    FileName = "Oneway Staffing Weekly Hours"
+    sendTo = "yaniras@onewaystaffing.net;arodriguez@onewaystaffing.net;jperez@alternacs.com"
+    create_email FileName, subjectLine, weekending, sendTo
     
 End Sub
 
@@ -1248,14 +1248,14 @@ Private Sub partners(weekending As String, startr As Integer, endr As Integer, l
     columns("S:U").Hidden = True    'Rates
     
     
-'    'DISPLAY EMAIL
-'    Dim agencyFileName As String, subjectLine As String, sendTo As String
-'    agencyFileName = "Partners Personnel - Tier 1a"
-'    subjectLine = "Partners Personnel Agency-WE: " & weekending
-'    sendTo = "leticia.varga@partnerspersonnel.com;marie.perez@partnerspersonnel.com"
-'
-'    Sheets("Partners T1 FINAL").Activate
-'    create_email agencyFileName, subjectLine, weekending, sendTo, 1
+    'DISPLAY EMAIL
+    Dim agencyFileName As String, subjectLine As String, sendTo As String
+    agencyFileName = "Partners Personnel - Tier 1a"
+    subjectLine = "Partners Personnel Agency-WE: " & weekending
+    sendTo = "leticia.varga@partnerspersonnel.com;marie.perez@partnerspersonnel.com"
+
+    Sheets("Partners T1 FINAL").Activate
+    create_email agencyFileName, subjectLine, weekending, sendTo, 1
     
 
 End Sub
@@ -1376,14 +1376,14 @@ Private Sub Resource(weekending As String, startr As Integer, endr As Integer, l
     
     Worksheets("Resource").Delete       'delete the one with all the formulas
     
-    'DISPLAY EMAIL
-'    Dim agencyFileName As String, subjectLine As String, sendTo As String
-'    agencyFileName = "book4xls-resource agency"
-'    subjectLine = "Resource Agency-WE: " & weekending
-'    sendTo = "mariela.sandoval@resourceemployment.com;caroline.mcmillan@resourceemployment.com"
-'
-'    Sheets("Resource FINAL").Activate
-'    create_email agencyFileName, subjectLine, weekending, sendTo
+    'DISPLAY Email
+    Dim agencyFileName As String, subjectLine As String, sendTo As String
+    agencyFileName = "book4xls-resource agency"
+    subjectLine = "Resource Agency-WE: " & weekending
+    sendTo = "mariela.sandoval@resourceemployment.com;caroline.mcmillan@resourceemployment.com"
+
+    Sheets("Resource FINAL").Activate
+    create_email agencyFileName, subjectLine, weekending, sendTo
     
 End Sub
 
@@ -3047,3 +3047,4 @@ Private Sub Resource_Setup(weekending As String)
     Cells.EntireColumn.AutoFit
     Range("D8").Select
 End Sub
+
