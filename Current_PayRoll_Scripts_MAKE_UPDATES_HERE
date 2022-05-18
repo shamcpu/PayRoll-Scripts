@@ -242,7 +242,7 @@ Public Sub MAIN_PROCEDURE()
             start = ResourceRows(0, 0)
             endr = ResourceRows(0, 1)
 
-            Resource weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5)
+            Resource weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), costCenter2()
 
         End If
         
@@ -298,7 +298,19 @@ Private Sub ACS(weekending As String, startRow As Integer, endRow As Integer, _
     
     For i = 0 To 7
         If Range("H2").Value = costCenter(i) Then
-            ACS_remarks(0) = "Office"
+            If i = 2 Or i = 0 Then 'Billing or Accounting Cost Center
+                ACS_remarks(0) = "Office-B"
+            ElseIf i = 4 Then 'Customer Service
+                ACS_remarks(0) = "Office-CS"
+            ElseIf i = 5 Then 'Dispatch
+                ACS_remarks(0) = "Office-D"
+            ElseIf i = 7 Then   'yard Office means Safety
+                ACS_remarks(0) = "Office-S"
+            ElseIf i = 3 Then   'Billing Write up Department\
+                ACS_remarks(0) = "Office-WD"
+            Else
+                ACS_remarks(0) = "Office"
+            End If
             Exit For
         Else
             ACS_remarks(0) = "Warehouse"
@@ -316,7 +328,19 @@ Private Sub ACS(weekending As String, startRow As Integer, endRow As Integer, _
             
             For m = 0 To 7
                 If Range("H" & i).Value = costCenter(m) Then
-                    ACS_remarks(ACS_total) = "Office"
+                    If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
+                        ACS_remarks(ACS_total) = "Office-B"
+                    ElseIf m = 4 Then 'Customer Service
+                        ACS_remarks(ACS_total) = "Office-CS"
+                    ElseIf m = 5 Then 'Dispatch
+                        ACS_remarks(ACS_total) = "Office-D"
+                    ElseIf m = 7 Then   'yard Office means Safety
+                        ACS_remarks(ACS_total) = "Office-S"
+                    ElseIf m = 3 Then   'Billing Write up Department\
+                        ACS_remarks(ACS_total) = "Office-WD"
+                    Else
+                        ACS_remarks(ACS_total) = "Office"
+                    End If
                     Exit For
                 Else
                     ACS_remarks(ACS_total) = "Warehouse"
@@ -633,7 +657,19 @@ Private Sub JAM(weekending As String, startRow As Integer, endRow As Integer, la
     
     For i = 0 To 7
         If Range("H" & startRow).Value = costCenter2(i) Then
-            JAM_remarks(0) = "Office"
+            If i = 2 Or i = 0 Then 'Billing or Accounting Cost Center
+                JAM_remarks(0) = "Office-B"
+            ElseIf i = 4 Then 'Customer Service
+                JAM_remarks(0) = "Office-CS"
+            ElseIf i = 5 Then 'Dispatch
+                JAM_remarks(0) = "Office-D"
+            ElseIf i = 7 Then   'yard Office means Safety
+                JAM_remarks(0) = "Office-S"
+            ElseIf i = 3 Then   'Billing Write up Department\
+                JAM_remarks(0) = "Office-WD"
+            Else
+                JAM_remarks(0) = "Office"
+            End If
             Exit For
         Else
             JAM_remarks(0) = "Warehouse"
@@ -652,7 +688,19 @@ Private Sub JAM(weekending As String, startRow As Integer, endRow As Integer, la
             'Determine if remark is Office or Warehouse
             For m = 0 To 7
                 If Range("H" & startRow).Value = costCenter2(m) Then
-                    JAM_remarks(JAM_total) = "Office"
+                    If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
+                        JAM_remarks(JAM_total) = "Office-B"
+                    ElseIf m = 4 Then 'Customer Service
+                        JAM_remarks(JAM_total) = "Office-CS"
+                    ElseIf m = 5 Then 'Dispatch
+                        JAM_remarks(JAM_total) = "Office-D"
+                    ElseIf m = 7 Then   'yard Office means Safety
+                        JAM_remarks(JAM_total) = "Office-S"
+                    ElseIf m = 3 Then   'Billing Write up Department
+                        JAM_remarks(JAM_total) = "Office-WD"
+                    Else
+                        JAM_remarks(JAM_total) = "Office"
+                    End If
                     Exit For
                 Else
                     JAM_remarks(JAM_total) = "Warehouse"
@@ -785,7 +833,19 @@ Private Sub OneWay(weekending As String, startr As Integer, endr As Integer, las
     'remarks
     For m = 0 To 7
         If Range("H" & startr).Value = costCenter2(m) Then
-            OneWay_remarks(0) = "Office"
+            If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
+                OneWay_remarks(0) = "Office-B"
+            ElseIf m = 4 Then 'Customer Service
+                OneWay_remarks(0) = "Office-CS"
+            ElseIf m = 5 Then 'Dispatch
+                OneWay_remarks(0) = "Office-D"
+            ElseIf m = 7 Then   'yard Office means Safety
+                OneWay_remarks(0) = "Office-S"
+            ElseIf m = 3 Then   'Billing Write up Department\
+                OneWay_remarks(0) = "Office-WD"
+            Else
+                OneWay_remarks(0) = "Office"
+            End If
             Exit For
         Else
             OneWay_remarks(0) = "Warehouse"
@@ -802,7 +862,19 @@ Private Sub OneWay(weekending As String, startr As Integer, endr As Integer, las
             'remarks
             For m = 0 To 7
                 If Range("H" & i).Value = costCenter2(m) Then
-                    OneWay_remarks(OneWay_total) = "Office"
+                    If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
+                        OneWay_remarks(OneWay_total) = "Office-B"
+                    ElseIf m = 4 Then 'Customer Service
+                        OneWay_remarks(OneWay_total) = "Office-CS"
+                    ElseIf m = 5 Then 'Dispatch
+                        OneWay_remarks(OneWay_total) = "Office-D"
+                    ElseIf m = 7 Then   'yard Office means Safety
+                        OneWay_remarks(OneWay_total) = "Office-S"
+                    ElseIf m = 3 Then   'Billing Write up Department\
+                        OneWay_remarks(OneWay_total) = "Office-WD"
+                    Else
+                        OneWay_remarks(OneWay_total) = "Office"
+                    End If
                     Exit For
                 Else
                     OneWay_remarks(OneWay_total) = "Warehouse"
@@ -955,9 +1027,22 @@ Private Sub partners(weekending As String, startr As Integer, endr As Integer, l
     Partners_tier(0) = Range("I" & startr).Value     'ACS Staffing tier
     Partners_emp_IDs(0) = Range("B" & startr).Value     'Emp ID#
     
+    'intialize first remark
     For m = 0 To 7
         If Range("H" & startr).Value = costCenter(m) Then
-            Partners_remarks(0) = "Office"
+            If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
+                Partners_remarks(0) = "Office-B"
+            ElseIf m = 4 Then 'Customer Service
+                Partners_remarks(0) = "Office-CS"
+            ElseIf m = 5 Then 'Dispatch
+                Partners_remarks(0) = "Office-D"
+            ElseIf m = 7 Then   'yard Office means Safety
+                Partners_remarks(0) = "Office-S"
+            ElseIf m = 3 Then   'Billing Write up Department
+                Partners_remarks(0) = "Office-WD"
+            Else
+                Partners_remarks(0) = "Office"
+            End If
             Exit For
         Else
             Partners_remarks(0) = "Warehouse"
@@ -976,7 +1061,19 @@ Private Sub partners(weekending As String, startr As Integer, endr As Integer, l
             'remark
             For m = 0 To 7
                 If Range("H" & i).Value = costCenter(m) Then
-                    Partners_remarks(Partners_total) = "Office"
+                    If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
+                        Partners_remarks(Partners_total) = "Office-B"
+                    ElseIf m = 4 Then 'Customer Service
+                        Partners_remarks(Partners_total) = "Office-CS"
+                    ElseIf m = 5 Then 'Dispatch
+                        Partners_remarks(Partners_total) = "Office-D"
+                    ElseIf m = 7 Then   'yard Office means Safety
+                        Partners_remarks(Partners_total) = "Office-S"
+                    ElseIf m = 3 Then   'Billing Write up Department
+                        Partners_remarks(Partners_total) = "Office-WD"
+                    Else
+                        Partners_remarks(Partners_total) = "Office"
+                    End If
                     Exit For
                 Else
                     Partners_remarks(Partners_total) = "Warehouse"
@@ -1186,7 +1283,7 @@ Private Sub partners(weekending As String, startr As Integer, endr As Integer, l
     PartnersT3_Supp tierRows(1, 1)
     
     'Calculations for first two columns
-    Range("B8").Formula2 = "=$F8*19.5"
+    Range("B8").Formula2 = "=$F8*E8"
     Range("B8").AutoFill Destination:=Range("=B8:B" & tierRows(1, 1) - 1), Type:=xlFillDefault
     
     Range("C8").Formula2 = "=$B8*0.015"
@@ -1208,17 +1305,14 @@ Private Sub partners(weekending As String, startr As Integer, endr As Integer, l
     
     'TOTALS
     Range("A" & tierRows(1, 1)) = "TOTAL"
-    
     'first two columns
     Range("B" & tierRows(1, 1)).Formula2 = "=SUM(B$8:B$" & tierRows(1, 1) - 1 & ")"
     Range("C" & tierRows(1, 1)).Formula2 = "=SUM(C$8:C$" & tierRows(1, 1) - 1 & ")"
-    
     'the rest
     Range("F" & tierRows(1, 1)).Formula2 = "=SUM(F$8:F$" & tierRows(1, 1) - 1 & ")"
     Range("F" & tierRows(1, 1)).AutoFill Destination:=Range("F" & tierRows(1, 1) & ":V" & tierRows(1, 1)), Type:=ylFillDefault
     
     Range("A" & tierRows(1, 1) & ":V" & tierRows(1, 1)).Font.Bold = True   'BOLD TOTALS
-    
     Range("B8:C" & tierRows(0, 1)).NumberFormat = "_(* #,##0.00_);_(* (#,##0.00);_(* ""-""??_);_(@_)"
     Range("E8:V" & tierRows(0, 1)).NumberFormat = "_(* #,##0.00_);_(* (#,##0.00);_(* ""-""??_);_(@_)"
     
@@ -1229,15 +1323,21 @@ Private Sub partners(weekending As String, startr As Integer, endr As Integer, l
     
     Sheets.Add.Name = "Partners T3 FINAL"
     
-    Sheets("Partners Tier 3").Range("A:K").Copy
-    Sheets("Partners T3 FINAL").Range("A:K").PasteSpecial Paste:=xlPasteValuesAndNumberFormats
-
-    Sheets("Partners Tier 3").Range("A:K").Copy
-    Sheets("Partners T3 FINAL").Range("A:K").PasteSpecial Paste:=xlPasteFormats
+    Sheets("Partners Tier 3").Range("A:A").Copy
+    Sheets("Partners T3 FINAL").Range("A:A").PasteSpecial Paste:=xlPasteValuesAndNumberFormats
+    Sheets("Partners Tier 3").Range("A:A").Copy
+    Sheets("Partners T3 FINAL").Range("A:A").PasteSpecial Paste:=xlPasteFormats
+    
+    Sheets("Partners Tier 3").Range("D:K").Copy
+    Sheets("Partners T3 FINAL").Range("D:K").PasteSpecial Paste:=xlPasteValuesAndNumberFormats
+    Sheets("Partners Tier 3").Range("D:K").Copy
+    Sheets("Partners T3 FINAL").Range("D:K").PasteSpecial Paste:=xlPasteFormats
     
     'copy bottom totals with formulas
     Sheets("Partners Tier 3").Range(tierRows(1, 1) & ":" & tierRows(1, 1)).Copy Destination:=Worksheets("Partners T3 FINAL").Range(tierRows(1, 1) & ":" & tierRows(1, 1))
     
+    'copy columns with formulas
+    Sheets("Partners Tier 3").Range("B:C").Copy Destination:=Worksheets("Partners T3 FINAL").Range("B:C")
     Sheets("Partners Tier 3").Range("L:AC").Copy Destination:=Worksheets("Partners T3 FINAL").Range("L:AC")
     Worksheets("Partners Tier 3").Delete       'delete the one with all the formulas
     
@@ -1259,7 +1359,10 @@ Private Sub partners(weekending As String, startr As Integer, endr As Integer, l
     
 
 End Sub
-Private Sub Resource(weekending As String, startr As Integer, endr As Integer, lastPivotRow As Integer, lastPivotColumn As String, STcol As Integer, OTcol As Integer, DTcol As Integer, SICK As Integer, vacayCol As Integer)
+Private Sub Resource(weekending As String, startr As Integer, endr As Integer, lastPivotRow As Integer, _
+                        lastPivotColumn As String, STcol As Integer, OTcol As Integer, DTcol As Integer, _
+                        SICK As Integer, vacayCol As Integer, costCenter() As String)
+                        
     Sheets("Resource").Activate
     Resource_Setup weekending
 
@@ -1269,10 +1372,12 @@ Private Sub Resource(weekending As String, startr As Integer, endr As Integer, l
     Dim Resource_total As Integer
     Dim Resource_employees() As String
     Dim Resource_emp_IDs() As String
+    Dim Resource_remarks() As String
     
+     
     ReDim Preserve Resource_employees(0)
     ReDim Preserve Resource_emp_IDs(0)
-    
+    ReDim Preserve Resource_remarks(0)
     Sheets("Export File").Activate
     
     'Initialize first employee from first line
@@ -1280,6 +1385,27 @@ Private Sub Resource(weekending As String, startr As Integer, endr As Integer, l
     Resource_employees(0) = Range("A" & startr).Value     'name
     Resource_emp_IDs(0) = Range("B" & startr).Value     'Emp ID#
     
+    'intialize first remark
+    For m = 0 To 7
+        If Range("H" & startr).Value = costCenter(m) Then
+            If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
+                Resource_remarks(0) = "Office-B"
+            ElseIf m = 4 Then 'Customer Service
+                Resource_remarks(0) = "Office-CS"
+            ElseIf m = 5 Then 'Dispatch
+                Resource_remarks(0) = "Office-D"
+            ElseIf m = 7 Then   'yard Office means Safety
+                Resource_remarks(0) = "Office-S"
+            ElseIf m = 3 Then   'Billing Write up Department
+                Resource_remarks(0) = "Office-WD"
+            Else
+                Resource_remarks(0) = "Office"
+            End If
+            Exit For
+        Else
+            Resource_remarks(0) = "Warehouse"
+        End If
+    Next m
 
     
     For i = startr + 1 To endr
@@ -1288,7 +1414,30 @@ Private Sub Resource(weekending As String, startr As Integer, endr As Integer, l
         
             ReDim Preserve Resource_employees(Resource_total)
             ReDim Preserve Resource_emp_IDs(Resource_total)
+            ReDim Preserve Resource_remarks(Resource_total)
             
+            'remark
+            For m = 0 To 7
+                If Range("H" & i).Value = costCenter(m) Then
+                    If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
+                        Resource_remarks(Resource_total) = "Office-B"
+                    ElseIf m = 4 Then 'Customer Service
+                        Resource_remarks(Resource_total) = "Office-CS"
+                    ElseIf m = 5 Then 'Dispatch
+                        Resource_remarks(Resource_total) = "Office-D"
+                    ElseIf m = 7 Then   'yard Office means Safety
+                        Resource_remarks(Resource_total) = "Office-S"
+                    ElseIf m = 3 Then   'Billing Write up Department
+                        Resource_remarks(Resource_total) = "Office-WD"
+                    Else
+                        Resource_remarks(Resource_total) = "Office"
+                    End If
+                    Exit For
+                Else
+                    Resource_remarks(Resource_total) = "Warehouse"
+                End If
+            Next m
+
             Resource_employees(Resource_total) = Range("A" & i).Value      'name
             Resource_emp_IDs(Resource_total) = Range("B" & i).Value      'ID
             Resource_total = Resource_total + 1   'increment by 1
@@ -1305,11 +1454,11 @@ Private Sub Resource(weekending As String, startr As Integer, endr As Integer, l
     startResource = 9
     endResource = 9
     
-    
+    'place values onto new file
     For i = 0 To Resource_total - 1
             Range("A" & endResource).Value = Resource_employees(i)  'name
             Range("B" & endResource).Value = Resource_emp_IDs(i)   'ID
-            
+            Range("L" & endResource).Value = Resource_remarks(i)
             'increment counter
             endResource = endResource + 1
     Next i
