@@ -137,17 +137,18 @@ Public Sub MAIN_PROCEDURE()
     lastcolumnNumber = Cells(4, columns.Count).End(xlToLeft).Column     'before the additional column
     lastPivotColumn = Split(Cells(1, lastcolumnNumber).Address, "$")(1)
     
-    Dim headers(5) As String
+    Dim headers(0 To 6) As String
     headers(0) = "Daily Double Time"
     headers(1) = "Daily Overtime"
     headers(2) = "Regular"
     headers(3) = "Sick"
     headers(4) = "Weekly Overtime"
     headers(5) = "Vacation"
+    headers(6) = "Holiday"
     
-    Dim cols(5) As Integer
+    Dim cols(0 To 6) As Integer
     
-    For n = 0 To 5
+    For n = 0 To 6
         cols(n) = 55     'irrelvant large number
     Next n
     
@@ -167,7 +168,7 @@ Public Sub MAIN_PROCEDURE()
     'get the column letters
     Dim weekOT As String, dailyOT As String
     
-    'HANDLES THE POSSIBILITY OF EACH OR BOTH OT COLUMN NOT EXISTING
+    'HANDLES THE POSSIBILITY OF EACH OR BOTH OVERTIME COLUMN NOT EXISTING
     If cols(4) = 55 And cols(1) <> 55 Then     'if no weekly overtime
         dailyOT = Split(Cells(1, cols(1)).Address, "$")(1)
         weekOT = "NONE"
@@ -233,7 +234,7 @@ Public Sub MAIN_PROCEDURE()
             start = PartnersRows(0, 0)
             endr = PartnersRows(0, 1)
 
-            partners weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), costCenter2()
+            partners weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), cols(6), costCenter2()
 
         End If
 
@@ -254,7 +255,19 @@ Public Sub MAIN_PROCEDURE()
     userName = Environ("username")
     weekendingWithPeriods = Replace(weekending, "/", " ")
     
-    
+    'Check if folder exists, if not create - then execute save command
+    Dim sFolderPath As String
+    sFolderPath = "C:\Users\" & userName & "\Documents\ALL AGENCIES - Weekly Payroll"
+    Dim fdObj As Object
+    Application.ScreenUpdating = False
+    Set fdObj = CreateObject("Scripting.FileSystemObject")
+    If fdObj.FolderExists(sFolderPath) Then
+        
+    Else
+        fdObj.CreateFolder (sFolderPath)
+    End If
+    Application.ScreenUpdating = True
+
     'Save final analysis as an .xlsx in Suzette's folder
     ActiveWorkbook.SaveAs FileName:="C:\Users\" & userName & "\Documents\ALL AGENCIES - Weekly Payroll\All Agencies-WE " & weekendingWithPeriods, FileFormat:=51
     
@@ -569,7 +582,7 @@ Private Sub create_email(agencyFileName As String, subjectLine As String, weeken
             On Error Resume Next
                 With OutMail
                     .To = sendTo
-                    .CC = "irodriguez@uwc-net.com;smustafa@uwc-net.com;dscheller@uwc-net.com;snorris@uwc-net.com;eelms@uwc-net.com;sdeleon@uwc-net.com"
+                    .CC = "dscheller@uwc-net.com;smustafa@uwc-net.com;snorris@uwc-net.com;eelms@uwc-net.com;sdeleon@uwc-net.com"
                     .BCC = "shamaram@uwc-net.com"
                     .Subject = subjectLine
                     .Body = "Good Afternoon," & Chr(10) & Chr(10) & "Please find attached hours for WE: " & weekending & "." & _
@@ -595,7 +608,7 @@ Private Sub create_email(agencyFileName As String, subjectLine As String, weeken
                 On Error Resume Next
                 With OutMail
                     .To = sendTo
-                    .CC = "irodriguez@uwc-net.com;smustafa@uwc-net.com;dscheller@uwc-net.com;snorris@uwc-net.com;eelms@uwc-net.com;sdeleon@uwc-net.com"
+                    .CC = "dscheller@uwc-net.com;smustafa@uwc-net.com;snorris@uwc-net.com;eelms@uwc-net.com;sdeleon@uwc-net.com"
                     .BCC = "shamaram@uwc-net.com"
                     .Subject = subjectLine
                     .Body = "Good Afternoon," & Chr(10) & Chr(10) & "Please find attached hours for WE: " & weekending & "." & _
@@ -687,7 +700,7 @@ Private Sub JAM(weekending As String, startRow As Integer, endRow As Integer, la
             
             'Determine if remark is Office or Warehouse
             For m = 0 To 7
-                If Range("H" & startRow).Value = costCenter2(m) Then
+                If Range("H" & i).Value = costCenter2(m) Then
                     If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
                         JAM_remarks(JAM_total) = "Office-B"
                     ElseIf m = 4 Then 'Customer Service
@@ -992,13 +1005,13 @@ End Sub
 
 Private Sub partners(weekending As String, startr As Integer, endr As Integer, lastPivotRow As Integer, _
                         lastPivotColumn As String, STcol As Integer, OTcol As Integer, DTcol As Integer, _
-                        SICK As Integer, vacayCol As Integer, costCenter() As String)
+                        SICK As Integer, vacayCol As Integer, holidayCol As Integer, costCenter() As String)
     Sheets("Partners Tier 1").Activate
-    Partners_Setup_PT1 weekending
+    Partners_Setup_PT1 weekending, 1
     Partners_setup_pt2
     
     Sheets("Partners Tier 3").Activate
-    Partners_Setup_PT1 weekending
+    Partners_Setup_PT1 weekending, 3
     Partners_setup_pt2
     
     
@@ -1106,29 +1119,11 @@ Private Sub partners(weekending As String, startr As Integer, endr As Integer, l
     
     For i = 0 To Partners_total - 1 'iterate through the array
         Dim firstIndex As Integer
-'        If Partners_tier(i) = "Tier 1" Then
-'            Sheets("Partners Tier 1").Activate
-'            Range("A" & tierRows(0, 1)).Value = Partners_employees(i)  'name
-'            Range("B" & tierRows(0, 1)).Value = Partners_emp_IDs(i)   'ID
-'            Range("R" & tierRows(0, 1)).Value = Partners_remarks(i) 'remark
-'            'increment counter
-'            tierRows(0, 1) = tierRows(0, 1) + 1
-'            tier1_count = tier1_count + 1
-'
-'        Else    'tier 3
-'            Sheets("Partners Tier 3").Activate
-'            Range("A" & tierRows(1, 1)).Value = Partners_employees(i) 'name
-'            Range("B" & tierRows(1, 1)).Value = Partners_emp_IDs(i)
-'            'increment counters
-'            tierRows(1, 1) = tierRows(1, 1) + 1
-'            tier3_count = tier3_count + 1
-'        End If
-        
         If Partners_tier(i) = "Tier 1" Then
             Sheets("Partners Tier 1").Activate
             firstIndex = 0
             
-            If Partners_remarks(i) = "Office" Then
+            If Left(Partners_remarks(i), 6) = "Office" Then
                 'REG RATE
                 Range("M" & tierRows(0, 1)).Formula2 = "=$H" & tierRows(0, 1) & "*1.3"
                 'OT RATE
@@ -1268,7 +1263,7 @@ Private Sub partners(weekending As String, startr As Integer, endr As Integer, l
     'TIER 3 RATE CALCULATIONS
     '------------------------
     Sheets("Partners Tier 3").Activate
-      
+    
     'REG RATE
     Range("M8").Formula2 = "=$H8*1.345"
     Range("M8").AutoFill Destination:=Range("=M8:M" & tierRows(1, 1) - 1), Type:=xlFillDefault
@@ -1278,6 +1273,7 @@ Private Sub partners(weekending As String, startr As Integer, endr As Integer, l
     'DT RATE
     Range("O8").Formula2 = "=$J8*1.315"
     Range("O8").AutoFill Destination:=Range("=O8:O" & tierRows(1, 1) - 1), Type:=xlFillDefault
+    
       
     'ADD ADDITIONAL COLUMNS FOR TIER 3
     PartnersT3_Supp tierRows(1, 1)
@@ -1289,15 +1285,27 @@ Private Sub partners(weekending As String, startr As Integer, endr As Integer, l
     Range("C8").Formula2 = "=$B8*0.015"
     Range("C8").AutoFill Destination:=Range("=C8:C" & tierRows(1, 1) - 1), Type:=xlFillDefault
     
+    'VACATION HOURS
     If vacayCol <> 55 Then
         'Calculations for Vacation hours and Pay  - Holiday hours pending due to there not being an option on UKG
         Range("K8").Formula2 = "=VLOOKUP($A8,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & vacayCol & ",FALSE)"      'vacation hours
         Range("K8").AutoFill Destination:=Range("K8:K" & tierRows(1, 1) - 1), Type:=xlFillDefault
     End If
     
+    'HOLIDAY HOURS
+    If holidayCol <> 55 Then
+        'Populate HOLIDAY hours
+        Range("J8").Formula2 = "=VLOOKUP($A8,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & holidayCol & ",FALSE)"
+        Range("J8").AutoFill Destination:=Range("J8:J" & tierRows(1, 1) - 1), Type:=xlFillDefault
+    End If
+    
     'vaction pay calc
     Range("Q8").Formula2 = "=$K8*$E8"
     Range("Q8").AutoFill Destination:=Range("=Q8:Q" & tierRows(1, 1) - 1), Type:=xlFillDefault
+    
+    'holiday pay calc
+    Range("P8").Formula2 = "=$J8*$E8"
+    Range("P8").AutoFill Destination:=Range("=P8:P" & tierRows(1, 1) - 1), Type:=xlFillDefault
     
     'Amended EMP TOtal
     Range("R8").Formula2 = "=SUM(L8:Q8)"
@@ -2812,7 +2820,7 @@ Private Sub oneway_headerBorders()
 End Sub
 
 
-Private Sub Partners_Setup_PT1(weekending As String)
+Private Sub Partners_Setup_PT1(weekending As String, tier As Integer)
 '
 ' Partners_Setup Macro
 '
@@ -2821,7 +2829,7 @@ Private Sub Partners_Setup_PT1(weekending As String)
     Range("A2").Value = "Tel: 310-715-1487"
     Range("A3").Value = "WEEK ENDING: " & weekending
     Range("A5").Value = "UNIVERSAL WAREHOUSE CO."
-    Range("A4").Value = "Tier 1"
+    Range("A4").Value = "Tier " & tier
     Range("A7").Value = "NAME"
     Range("B7").Value = "Employee ID#"
     Range("C7").Value = "Rate"
