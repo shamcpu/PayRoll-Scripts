@@ -1,116 +1,128 @@
-
+'
+' BEGIN PAYROLL MACRO
+'
 Public Sub MAIN_PROCEDURE()
 
-    'Insert message box asking for the week ending date - and confirmation message box
+    '--BEGIN @weekending capture
+    
+    '@weekending - holds date value of user inputted week ending date
     Dim weekending As String
     weekending = InputBox("Please enter the Week Ending Date in the format mm/dd/yyyy", "WEEK ENDING")
         
+    'Format Validation for weekending
     Do While Not IsDate(weekending)
         msg = MsgBox("Invalid format. Please type the date in the correct format: mm/dd/yyyy", vbOKOnly, "Invalid Date Format")
         weekending = InputBox("Please enter the Week Ending Date in the format mm/dd/yyyy", "WEEK ENDING")
     Loop
     
-    'CONFIRMATION that week ending is correct
+    'User Confirmation prompt verifying correct weekending date
     confirm = MsgBox("Is " & weekending & " the correct week ending date?", vbYesNo, "CONFIRM")
     
+    'If user selects No, ask again
     Do While confirm = vbNo
-        weekending = InputBox("Please enter the Week Ending Date", "WEEK ENDING")
+        weekending = InputBox("Please enter the Week Ending Date in the format mm/dd/yyyy", "WEEK ENDING")
+        
+       'Date format validation
+        Do While Not IsDate(weekending)
+            msg = MsgBox("Invalid format. Please type the date in the correct format: mm/dd/yyyy", vbOKOnly, "Invalid Date Format")
+            weekending = InputBox("Please enter the Week Ending Date in the format mm/dd/yyyy", "WEEK ENDING")
+        Loop
+        
         confirm = MsgBox("Is " & weekending & " the correct week ending date?", vbYesNoCancel, "CONFIRM")
     Loop
     
+    '---END @weekending capture
+    
+    'Halt popups initiated by Excel
     Application.DisplayAlerts = False
-    'sort export file
+    
+    'Run procedure that sorts export file
     Payroll_Sort
-    
-    
-    'Declare agency names array
+     
+    'Declare variables
+    '@agencies - array for staffing agency names
+    '@*rows - arrays for the start and end row#s for each agency (on export file); rows(0) = start, rows(1) = end
+    '@totalLastRow - variable that holds last row# of export file
     Dim agencies(4) As String
+    Dim ACSrows(1), JAMrows(1), OneWayRows(1), PartnersRows(1), ResourceRows(1) As Integer
+    Dim totalLastRow As Integer
+    totalLastRow = Range("A1").End(xlDown).row
     
-    'initalize
+    'Initialize @agencies
     agencies(0) = "ACS Staffing"
     agencies(1) = "JAM Staffing"
     agencies(2) = "OneWay Staffing"
     agencies(3) = "Partners"
     agencies(4) = "Resource"
     
-    
-    'Declare and initalize start and end rows for each agency from the original export file
-    Dim ACSrows(0, 1), JAMrows(0, 1), OneWayRows(0, 1), PartnersRows(0, 1), ResourceRows(0, 1) As Integer 'row(start, end)
-    
-    'After PayrollSort ACS Staffing will ALWAYS be first.
-    
-    'intialize all start and end positions to 0
+    'Intialize @*rows to 2 (first row of data on the export file is 2)
     For k = 0 To 1
-        ACSrows(0, k) = 2
-        JAMrows(0, k) = 2
-        OneWayRows(0, k) = 2
-        PartnersRows(0, k) = 2
-        ResourceRows(0, k) = 2
+        ACSrows(k) = 2
+        JAMrows(k) = 2
+        OneWayRows(k) = 2
+        PartnersRows(k) = 2
+        ResourceRows(k) = 2
     Next k
 
-    '-------------------------------------------------------------GEt START AND END ROWS FOR ALL AGENCIES FROM EXPORT FILE------------------------------------------------------------------------
-    'make sure to handle errors
+    '-------------------------------------------------------------GEt START AND END ROW#s FOR ALL AGENCIES FROM EXPORT FILE------------------------------------------------------------------------
+    'Activate export file worksheet
     Worksheets("Export File").Activate
     
-    
-    Dim totalLastRow As Integer
-    totalLastRow = Range("A1").End(xlDown).row
+    'ADD NEW RECLASSIFICATION COLUMN --ADDED 8/28/22
+    'CALL PROCEDURE
+    addReclassColumn
      
-    ACSrows(0, 0) = 2
-    'RECURSIVE FORMULA??
-    'get the start and end row nums for each agency
+    'After PayrollSort procedure, ACS Staffing will always be first
+    'get start and end row#s for each agency
     For i = 2 To totalLastRow
-        'If value is anything but ACS then the last row of ACS is currentRow - 1
         If Range("G" & i) <> "ACS Staffing" Then
             
-            ACSrows(0, 1) = i - 1   'end ACS rows
-            JAMrows(0, 0) = i       'start JAM
+            ACSrows(1) = i - 1   'end ACS rows
+            JAMrows(0) = i       'start JAM
             Exit For
-        ElseIf i = totalLastRow And Range("G" & i) = "ACS Staffing" Then    'if the last row is ACS Staffing then do not do the rest
-            ACSrows(0, 1) = i
-            JAMrows(0, 0) = i
-            ResourceRows(0, 0) = i
-            PartnersRows(0, 0) = i
-            OneWayRows(0, 0) = i
+                
+        'if the last row = ACS Staffing then set start row#s for other agencies as totalLastRow
+        ElseIf i = totalLastRow And Range("G" & i) = "ACS Staffing" Then
+            ACSrows(1) = i
+            JAMrows(0) = i
+            ResourceRows(0) = i
+            PartnersRows(0) = i
+            OneWayRows(0) = i
         End If
     Next i
     
-    If JAMrows(0, 0) <> totalLastRow Then
-        For i = JAMrows(0, 0) To totalLastRow
-           'If value is anything but JAM then the last row of JAM is currentRow - 1
+    If JAMrows(0) <> totalLastRow Then
+        For i = JAMrows(0) To totalLastRow
             If Range("G" & i) <> "JAM Staffing" Then
                 
-                JAMrows(0, 1) = i - 1   'end JAM rows
-                OneWayRows(0, 0) = i    'start ONEWAY
+                JAMrows(1) = i - 1   'end Jam
+                OneWayRows(0) = i    'start OneWaYy
                 Exit For
             End If
         Next i
         
-        For i = OneWayRows(0, 0) To totalLastRow
-            'If value is anything but ACS then the last row of ACS is currentRow - 1
+        For i = OneWayRows(0) To totalLastRow
             If Range("G" & i) <> "OneWay Staffing" Then
                 
-                OneWayRows(0, 1) = i - 1   'end oneway rows
-                PartnersRows(0, 0) = i       'start partners
+                OneWayRows(1) = i - 1   'end OneWay
+                PartnersRows(0) = i       'start Partners
                 Exit For
             End If
         Next i
         
-        For i = PartnersRows(0, 0) To totalLastRow
-            'If value is anything but ACS then the last row of ACS is currentRow - 1
+        For i = PartnersRows(0) To totalLastRow
             If Range("G" & i) <> "Partners Personnel" Then
                 
-                PartnersRows(0, 1) = i - 1   'end Partners
-                ResourceRows(0, 0) = i       'start Resource
+                PartnersRows(1) = i - 1   'end Partners
+                ResourceRows(0) = i       'start Resource
                 Exit For
             End If
         Next i
         
-        For i = ResourceRows(0, 0) To totalLastRow
-            'If value is anything but ACS then the last row of ACS is currentRow - 1
+        For i = ResourceRows(0) To totalLastRow
             If Range("G" & i) <> "Resource Employment" Then
                 
-                ResourceRows(0, 1) = i - 1   'end resource
+                ResourceRows(1) = i - 1   'end Resource
                 Exit For
             End If
         Next i
@@ -119,25 +131,31 @@ Public Sub MAIN_PROCEDURE()
     
 '-------------------------------------------------------------FINISH START AND END ROWS -----------------------------------------------------------------------
     
-    '--------------------------------------------------------------PIVOT TABLE MACRO---------------------------------------------------------
-    PivotTable totalLastRow             'create pivot table
+    '--------------------------------------------------------------PIVOT TABLE WORK---------------------------------------------------------
+    ' Call procedure to create pivot table on new worksheet
+    PivotTable totalLastRow
     
-    'Get pivot table row and column metrics
+    ' Get pivot table row and column metrics
+    ' @headers() - contains string values of possible pivot table headers
+    ' @cols() - contains number column#s of respective header strings
+    ' @weekOT - string letter of Weekly Overtime column (if exists)
+    ' dailyOT - string letter of Daily Overtime column (if exists)
     Dim lastPivotRow As Integer
     Dim firstPivotRow As Integer
     Dim lastPivotColumn As String
     Dim lastcolumnNumber As Integer
-    
-    firstPivotRow = 5    'first row of data
-    
-    lastPivotRow = Range("A4").End(xlDown).row - 1  '-1 because last row are the totals
-    Range("J1").Value = lastPivotRow
-    
-  
-    lastcolumnNumber = Cells(4, columns.Count).End(xlToLeft).Column     'before the additional column
-    lastPivotColumn = Split(Cells(1, lastcolumnNumber).Address, "$")(1)
-    
     Dim headers(0 To 6) As String
+    Dim cols(0 To 6) As Integer
+    Dim weekOT As String, dailyOT As String
+    
+    ' first row of data on pivot table
+    firstPivotRow = 5
+    lastPivotRow = Range("A4").End(xlDown).row - 1  'excluding totals row
+    ' Range("J1").Value = lastPivotRow ' display/troubleshooting purposes
+    
+    lastcolumnNumber = Cells(4, columns.Count).End(xlToLeft).Column
+    lastPivotColumn = Split(Cells(1, lastcolumnNumber).Address, "$")(1)
+        
     headers(0) = "Daily Double Time"
     headers(1) = "Daily Overtime"
     headers(2) = "Regular"
@@ -146,14 +164,14 @@ Public Sub MAIN_PROCEDURE()
     headers(5) = "Vacation"
     headers(6) = "Holiday"
     
-    Dim cols(0 To 6) As Integer
-    
+    ' Default value 55 in case header does not exist in pivot table
     For n = 0 To 6
-        cols(n) = 55     'irrelvant large number
+        cols(n) = 55
     Next n
     
-    For i = 2 To lastcolumnNumber - 1 '(excludes the 'Grand Total' column
-        
+    ' Iterate through pivot table headers excluding last column (totals)
+    ' Gather column numbers if they exist
+    For i = 2 To lastcolumnNumber - 1
         For j = 0 To UBound(cols)
             
             If headers(j) = Cells(4, i).Value Then
@@ -162,119 +180,131 @@ Public Sub MAIN_PROCEDURE()
             End If
             
         Next j
-        
     Next i
     
-    'get the column letters
-    Dim weekOT As String, dailyOT As String
     
-    'HANDLES THE POSSIBILITY OF EACH OR BOTH OVERTIME COLUMN NOT EXISTING
-    If cols(4) = 55 And cols(1) <> 55 Then     'if no weekly overtime
+    ' HANDLES THE POSSIBILITY OF EACH OR BOTH OVERTIME COLUMN HEADERS NOT EXISTING
+    ' No weekly overtime
+    If cols(4) = 55 And cols(1) <> 55 Then
         dailyOT = Split(Cells(1, cols(1)).Address, "$")(1)
         weekOT = "NONE"
+    ' No daily overtime
     ElseIf cols(1) = 55 And cols(4) <> 55 Then
         dailyOT = "NONE"
         weekOT = Split(Cells(1, cols(4)).Address, "$")(1)
+    ' No daily or weekly overtime
     ElseIf cols(1) = 55 And cols(4) = 55 Then
         dailyOT = "NONE"
         weekOT = "NONE"
+    ' Both overtime columns exist
     Else
         weekOT = Split(Cells(1, cols(4)).Address, "$")(1)
         dailyOT = Split(Cells(1, cols(1)).Address, "$")(1)
     End If
     
+    ' Run totalOT_Pivot procedure to add total OT column at the end of pivot table
+    ' Store value in @lastPivotColumn
     lastPivotColumn = totalOT_Pivot(lastPivotRow, lastcolumnNumber, weekOT, dailyOT)
     
-    'array to hold all the clerical cost centers
-    'anything that does not equal this belongs to the warehouse
-    Dim costCenter2(7) As String
+'--------------------------------------------------------------END PIVOT TABLE WORK-------------------------------------------------------------------
     
-    costCenter2(0) = "Accounting"
-    costCenter2(1) = "Admin"
-    costCenter2(2) = "Billing"
-    costCenter2(3) = "Billing Write Up"
-    costCenter2(4) = "Customer Service"
-    costCenter2(5) = "Dispatch"
-    costCenter2(6) = "Office"
-    costCenter2(7) = "Yard Office"
-    
+    ' @costCenter2 - array to hold all the clerical(non WHSE) cost centers
+    ' @start - export file start row for agency (used for calling procedures)
+    ' @endr - export file end row for agency (used for calling procedures)
+    Dim costcenter2(7) As String
     Dim start As Integer
     Dim endr As Integer
     
-    'If Agency rows exist, then create spreadsheet
-        If ACSrows(0, 0) <= ACSrows(0, 1) Then
+    costcenter2(0) = "Accounting"
+    costcenter2(1) = "Admin"
+    costcenter2(2) = "Billing"
+    costcenter2(3) = "Billing Write Up"
+    costcenter2(4) = "Customer Service"
+    costcenter2(5) = "Dispatch"
+    costcenter2(6) = "Office"
+    costcenter2(7) = "Yard Office"
+    
+    
+    ' If Agency exists on export file, then create spreadsheet, and call setup procedure
+        If ACSrows(0) <= ACSrows(1) Then
+        
             Sheets.Add.Name = "ACS Staffing"
-            start = ACSrows(0, 0)
-            endr = ACSrows(0, 1)
-            
-            ACS weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), costCenter2()
+            start = ACSrows(0)
+            endr = ACSrows(1)
+            ACS weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), costcenter2()
             
         End If
         
-        If JAMrows(0, 0) <= JAMrows(0, 1) Then
+        If JAMrows(0) <= JAMrows(1) Then
+            
             Sheets.Add.Name = "JAM Staffing"
-            start = JAMrows(0, 0)
-            endr = JAMrows(0, 1)
-
-            JAM weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), costCenter2()
+            start = JAMrows(0)
+            endr = JAMrows(1)
+            JAM weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), costcenter2()
+            
         End If
 
-        If OneWayRows(0, 0) <= OneWayRows(0, 1) Then
+        If OneWayRows(0) <= OneWayRows(1) Then
+            
             Sheets.Add.Name = "OneWay Staffing"
-            start = OneWayRows(0, 0)
-            endr = OneWayRows(0, 1)
-
-            OneWay weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), costCenter2()
+            start = OneWayRows(0)
+            endr = OneWayRows(1)
+            OneWay weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), costcenter2()
 
         End If
 
-        If PartnersRows(0, 0) <= PartnersRows(0, 1) Then
+        If PartnersRows(0) <= PartnersRows(1) Then
+        
             Sheets.Add.Name = "Partners Tier 1"
             Sheets.Add.Name = "Partners Tier 3"
-            start = PartnersRows(0, 0)
-            endr = PartnersRows(0, 1)
-
-            partners weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), cols(6), costCenter2()
+            start = PartnersRows(0)
+            endr = PartnersRows(1)
+            partners weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), cols(6), costcenter2()
 
         End If
 
-        If ResourceRows(0, 0) <= ResourceRows(0, 1) Then
+        If ResourceRows(0) <= ResourceRows(1) Then
+        
             Sheets.Add.Name = "Resource"
-            start = ResourceRows(0, 0)
-            endr = ResourceRows(0, 1)
-
-            Resource weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), costCenter2()
+            start = ResourceRows(0)
+            endr = ResourceRows(1)
+            Resource weekending, start, endr, lastPivotRow, lastPivotColumn, cols(2), lastcolumnNumber + 1, cols(0), cols(3), cols(5), costcenter2()
 
         End If
         
     Application.DisplayAlerts = True
     
+    
+' ------------------------------------------------CREATE FOLDER IN DOCUMENTS (if not already created) AND SAVE FILE--------------------------------------------------------------------------
+    ' @userName - computer username
+    ' @weekendingWithPeriods - replace @weekending value slashes with period (for file path purposes)
+    ' @sFolderPath - to hold path for folder
+    ' @fdObj - Object variable for holding file system object
     Dim userName As String
     Dim weekendingWithPeriods As String
+    Dim sFolderPath As String
+    Dim fdObj As Object
     
+    ' Capture computer username
     userName = Environ("username")
     weekendingWithPeriods = Replace(weekending, "/", " ")
     
-    'Check if folder exists, if not create - then execute save command
-    Dim sFolderPath As String
+    ' Set folder path to look for/create folder
     sFolderPath = "C:\Users\" & userName & "\Documents\ALL AGENCIES - Weekly Payroll"
-    Dim fdObj As Object
     Application.ScreenUpdating = False
     Set fdObj = CreateObject("Scripting.FileSystemObject")
+    
+    ' Check if folder exists, if not create, then execute save command
     If fdObj.FolderExists(sFolderPath) Then
-        
     Else
         fdObj.CreateFolder (sFolderPath)
     End If
     Application.ScreenUpdating = True
 
-    'Save final analysis as an .xlsx in Suzette's folder
+    ' Save final analysis as an .xlsx in folder
     ActiveWorkbook.SaveAs FileName:="C:\Users\" & userName & "\Documents\ALL AGENCIES - Weekly Payroll\All Agencies-WE " & weekendingWithPeriods, FileFormat:=51
     
 End Sub
-
-
-'---------------------------------------------------------------------ACS-START--------------------------------------------------------
     
 Private Sub ACS(weekending As String, startRow As Integer, endRow As Integer, _
                 lastPivotRow As Integer, lastPivotColumn As String, STcol As Integer, _
@@ -283,13 +313,13 @@ Private Sub ACS(weekending As String, startRow As Integer, endRow As Integer, _
     'ACS-SETUP
     ACS_Setup_Part1 weekending
     ACS_Setup_Part2
-    
-    '''
-    '''
-    'Get ACS names, empIds, and rates
-    '''
-    '''
-    'declare arrays to store name, tier, and employee ID - handle rates separately using a formula
+
+    ' Declare variables
+    ' @ACS_total - total number of ACS employees
+    ' @ACS_employees() - ACS employee names
+    ' @ACS_emp_IDs() - ACS employee ID#s
+    ' @ACS_tier() - Tier of each ACS employee
+    ' @ACS_remarks() - ACS Employee remarks
     Dim ACS_total As Integer
     Dim ACS_employees() As String
     Dim ACS_emp_IDs() As String
@@ -303,23 +333,24 @@ Private Sub ACS(weekending As String, startRow As Integer, endRow As Integer, _
     
     Sheets("Export File").Activate
     
-    'Initialize first employee from first line
+    ' Initialize first employee from first line
     ACS_total = 1
-    ACS_employees(0) = Range("A2").Value     'name
-    ACS_tier(0) = Range("I2").Value     'ACS Staffing tier
-    ACS_emp_IDs(0) = Range("B2").Value     'Emp ID#
+    ACS_employees(0) = Range("A2").Value    ' name
+    ACS_tier(0) = Range("I2").Value         ' ACS Staffing tier
+    ACS_emp_IDs(0) = Range("B2").Value      ' Emp ID#
     
+    ' Deduce remarks based off Cost center 2
     For i = 0 To 7
         If Range("H2").Value = costCenter(i) Then
-            If i = 2 Or i = 0 Then 'Billing or Accounting Cost Center
+            If i = 2 Or i = 0 Then  'Billing or Accounting Cost Center
                 ACS_remarks(0) = "Office-B"
-            ElseIf i = 4 Then 'Customer Service
+            ElseIf i = 4 Then       'Customer Service
                 ACS_remarks(0) = "Office-CS"
-            ElseIf i = 5 Then 'Dispatch
+            ElseIf i = 5 Then       'Dispatch
                 ACS_remarks(0) = "Office-D"
-            ElseIf i = 7 Then   'yard Office means Safety
+            ElseIf i = 7 Then       'yard Office = Safety
                 ACS_remarks(0) = "Office-S"
-            ElseIf i = 3 Then   'Billing Write up Department\
+            ElseIf i = 3 Then       'Billing Write up Department
                 ACS_remarks(0) = "Office-WD"
             Else
                 ACS_remarks(0) = "Office"
@@ -331,9 +362,9 @@ Private Sub ACS(weekending As String, startRow As Integer, endRow As Integer, _
     Next i
     
     For i = 3 To endRow
-        
-        If Range("A" & i).Value <> Range("A" & i - 1).Value Then  'new employee (different from previous)
-        
+        If Range("A" & i).Value <> Range("A" & i - 1).Value Then  'New employee (different from previous)
+                    
+            'Resize arrays
             ReDim Preserve ACS_employees(ACS_total)
             ReDim Preserve ACS_emp_IDs(ACS_total)
             ReDim Preserve ACS_tier(ACS_total)
@@ -341,15 +372,15 @@ Private Sub ACS(weekending As String, startRow As Integer, endRow As Integer, _
             
             For m = 0 To 7
                 If Range("H" & i).Value = costCenter(m) Then
-                    If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
+                    If m = 2 Or m = 0 Then  'Billing or Accounting Cost Center
                         ACS_remarks(ACS_total) = "Office-B"
-                    ElseIf m = 4 Then 'Customer Service
+                    ElseIf m = 4 Then       'Customer Service
                         ACS_remarks(ACS_total) = "Office-CS"
-                    ElseIf m = 5 Then 'Dispatch
+                    ElseIf m = 5 Then       'Dispatch
                         ACS_remarks(ACS_total) = "Office-D"
-                    ElseIf m = 7 Then   'yard Office means Safety
+                    ElseIf m = 7 Then       'yard Office means Safety
                         ACS_remarks(ACS_total) = "Office-S"
-                    ElseIf m = 3 Then   'Billing Write up Department\
+                    ElseIf m = 3 Then       'Billing Write up Department
                         ACS_remarks(ACS_total) = "Office-WD"
                     Else
                         ACS_remarks(ACS_total) = "Office"
@@ -360,17 +391,16 @@ Private Sub ACS(weekending As String, startRow As Integer, endRow As Integer, _
                 End If
             Next m
             
-            
-            ACS_employees(ACS_total) = Range("A" & i).Value      'name
-            ACS_tier(ACS_total) = Range("I" & i).Value      'tier
-            ACS_emp_IDs(ACS_total) = Range("B" & i).Value      'ID
-            ACS_total = ACS_total + 1   'increment by 1
-        End If
+            ACS_employees(ACS_total) = Range("A" & i).Value     ' Name
+            ACS_tier(ACS_total) = Range("I" & i).Value          ' Tier
+            ACS_emp_IDs(ACS_total) = Range("B" & i).Value       ' ID#
+            ACS_total = ACS_total + 1                           ' Increment total by 1
         
+        End If
     Next i
     
     
-    'Enter values on ACS Staffing sheet
+    ' Enter values on ACS Staffing sheet
     Worksheets("ACS Staffing").Activate
     
     Dim ACS_tiers(3) As String
@@ -379,136 +409,142 @@ Private Sub ACS(weekending As String, startRow As Integer, endRow As Integer, _
     ACS_tiers(2) = "Tier 2-G Labor"
     ACS_tiers(3) = "Tier 2-Clerical"
     
-    'create and initialize array of counters for each employee per tier as you add
+    ' @rowCount() - array of start and end row# for each Tier on new sheet
+    ' rowCount(x,1) will be incremented as employees are added to sheet
     Dim rowCount(3, 1) As Integer   'rowcount (start,end)
-    rowCount(0, 0) = 10
-    rowCount(0, 1) = 10
-    rowCount(1, 0) = 67
-    rowCount(1, 1) = 67
-    rowCount(2, 0) = 95
-    rowCount(2, 1) = 95
-    rowCount(3, 0) = 132
-    rowCount(3, 1) = 132
+    rowCount(0, 0) = 10     ' start Tier 1-G Labor
+    rowCount(0, 1) = 10     ' end
+    rowCount(1, 0) = 67     ' start Tier1-Clerical
+    rowCount(1, 1) = 67     ' end
+    rowCount(2, 0) = 95     ' start Tier 2-G Labor
+    rowCount(2, 1) = 95     ' end
+    rowCount(3, 0) = 132    ' start Tier2-Clerical
+    rowCount(3, 1) = 132    ' end
     
-    'Put the names on the ACS sheet based off the second index (tier)
-    'A6 - Tier 1-G Labor     -names start on A10    array index = 0
-    'A67 - Tier 1-G Clerical -names start on A67    array index = 1
-    'A91 - Tier 2-G Labor    -names start on A95    array index = 2
-    'A128 - TIer 2-G Clerical - names start on A132 array index = 3
+    ' Put the names on the ACS sheet based off the second index (tier)
+    ' A6   - Tier 1-G Labor     - names start on A10    array index = 0
+    ' A67  - Tier 1-G Clerical  - names start on A67    array index = 1
+    ' A91  - Tier 2-G Labor     - names start on A95    array index = 2
+    ' A128 - TIer 2-G Clerical  - names start on A132   array index = 3
     
-    
-    For i = 0 To ACS_total - 1 'iterate through the array
-        
+    For i = 0 To ACS_total - 1
         For j = 0 To 3
             
             If ACS_tier(i) = ACS_tiers(j) Then
-                'place employee name, ID, and remarks under the appropriate tier
-                Range("A" & rowCount(j, 1)).Value = ACS_employees(i)   'name
-                Range("B" & rowCount(j, 1)).Value = ACS_emp_IDs(i)      'ID
-                Range("L" & rowCount(j, 1)).Value = ACS_remarks(i)      'remarks
+                ' Place employee name, ID#, and remarks under the appropriate tier
+                Range("A" & rowCount(j, 1)).Value = ACS_employees(i)    ' name
+                Range("B" & rowCount(j, 1)).Value = ACS_emp_IDs(i)      ' ID
+                Range("L" & rowCount(j, 1)).Value = ACS_remarks(i)      ' remarks
             
-                'increment counter
+                ' increment counter
                 rowCount(j, 1) = rowCount(j, 1) + 1
                 Exit For
-                
             End If
-            
-        Next j
     
+        Next j
     Next i
     
+    ' @kvalues - holds the row# for the placement of multipliers for each tier
     Dim kvalues(3) As Integer
     kvalues(0) = 1
     kvalues(1) = 58
     kvalues(2) = 86
     kvalues(3) = 123
     
-    'Fill in rates for ACS
+    ' Fill in rates for ACS
     For i = 0 To 3
         
-        'Rate formula
+        ' Rate formula
         Range("C" & rowCount(i, 0)).Formula2 = "=INDEX('Export File'!$D$2:$D$" & endRow & ",MATCH(1,($A" & rowCount(i, 0) & "='Export File'!$A$2:$A$" & endRow & ")*(""Regular""='Export File'!$C$2:$C$" & endRow & "),0))"
         Range("C" & rowCount(i, 0)).AutoFill Destination:=Range("C" & rowCount(i, 0) & ":C" & rowCount(i, 1) - 1), Type:=xlFillDefault
     
-        'Populate total to bill formula
+        ' Populate total to bill formula
         Range("K" & rowCount(i, 0)).Formula2 = "=((D" & rowCount(i, 0) & "*C" & rowCount(i, 0) & ")+(E" & rowCount(i, 0) & "*C" & rowCount(i, 0) & "*1.5)+(F" & rowCount(i, 0) & "*C" & rowCount(i, 0) & "*2))*K$" & kvalues(i)
         Range("K" & rowCount(i, 0)).AutoFill Destination:=Range("K" & rowCount(i, 0) & ":K" & rowCount(i, 1) - 1), Type:=xlFillDefault
         
-        'Populate ST HOURS
+        ' Populate ST HOURS
         Range("D" & rowCount(i, 0)).Formula2 = "=VLOOKUP($A" & rowCount(i, 0) & ",Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & STcol & ",FALSE)"
         Range("D" & rowCount(i, 0)).AutoFill Destination:=Range("D" & rowCount(i, 0) & ":D" & rowCount(i, 1) - 1), Type:=xlFillDefault
         
-        'Populate OT HOURS
+        ' Populate OT HOURS
         Range("E" & rowCount(i, 0)).Formula2 = "=VLOOKUP($A" & rowCount(i, 0) & ",Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & OTcol & ",FALSE)"
         Range("E" & rowCount(i, 0)).AutoFill Destination:=Range("E" & rowCount(i, 0) & ":E" & rowCount(i, 1) - 1), Type:=xlFillDefault
         
+        ' Populate DT HOURS if column exists
         If DTcol <> 55 Then
-            'Populate DT HOURS
             Range("F" & rowCount(i, 0)).Formula2 = "=VLOOKUP($A" & rowCount(i, 0) & ",Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & DTcol & ",FALSE)"
             Range("F" & rowCount(i, 0)).AutoFill Destination:=Range("F" & rowCount(i, 0) & ":F" & rowCount(i, 1) - 1), Type:=xlFillDefault
         End If
         
+        ' Populate SICK if column exists
         If SICKcol <> 55 Then
-            'Populate SICK
             Range("H" & rowCount(i, 0)).Formula2 = "=VLOOKUP($A" & rowCount(i, 0) & ",Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & SICKcol & ",FALSE)"
             Range("H" & rowCount(i, 0)).AutoFill Destination:=Range("H" & rowCount(i, 0) & ":H" & rowCount(i, 1) - 1), Type:=xlFillDefault
         End If
         
-        'Populate VACATION
+        ' Populate VACATION if column exists
         If vacayCol <> 55 Then
             Range("G" & rowCount(i, 0)).Formula2 = "=VLOOKUP($A" & rowCount(i, 0) & ",Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & vacayCol & ",FALSE)"
             Range("G" & rowCount(i, 0)).AutoFill Destination:=Range("G" & rowCount(i, 0) & ":G" & rowCount(i, 1) - 1), Type:=xlFillDefault
         End If
         
         Range("C" & rowCount(i, 0) & ": K" & rowCount(i, 1)).NumberFormat = "0.00"
-        
+
         calculateTotals rowCount(i, 0), rowCount(i, 1)
         Add_border_to_single_table rowCount(i, 0), rowCount(i, 1)
         
     Next i
     
-    'Autofill total formulas and add borders
     Sheets("ACS Staffing").Activate
-   
-    'Autofit all columns -  can do this at the end with loop iterator using the agencies/worksheet names
     Worksheets("ACS Staffing").columns("A:L").AutoFit
-   
     
-    
-    
+    ' Create new sheet that will contain only values and necessary formulas
     Sheets.Add.Name = "ACS FINAL"
-
     
-    'Copy values and formatting to another sheet
+    ' Copy values and formatting to another sheet
     Sheets("ACS Staffing").Range("A:J").Copy
     Sheets("ACS FINAL").Range("A:J").PasteSpecial Paste:=xlPasteValuesAndNumberFormats
-
     Sheets("ACS Staffing").Range("A:J").Copy
     Sheets("ACS FINAL").Range("A:J").PasteSpecial Paste:=xlPasteFormats
     
-    'copy totals formulas and formatting
+    ' Copy and paste totals formulas and formatting for each tier
     For i = 0 To 3
     Sheets("ACS Staffing").Range(rowCount(i, 1) & ":" & rowCount(i, 1)).Copy Destination:=Worksheets("ACS FINAL").Range(rowCount(i, 1) & ":" & rowCount(i, 1))
     Next i
     
-    'copy formulas
+    ' Copy and paste formulas
     Sheets("ACS Staffing").Range("K:AC").Copy Destination:=Worksheets("ACS FINAL").Range("K:AC")
     
-    Worksheets("ACS Staffing").Delete       'delete the one with all the formulas
+    ' Delete original ACS sheet
+    Worksheets("ACS Staffing").Delete
     Sheets("ACS FINAL").Activate
     
-    
+    ' @subjectLine - subject line of email to be sent to ACS Staffing
+    ' @FileName - file name of file we will attach to email (not saved on computer)
+    ' @sendTo - email recipients containing ACS Staffing personnel
+    '         - (edit this variable to remove or add recipients) - based off Suzette's instructions
     Dim subjectLine As String, FileName As String, sendTo As String
+    
     subjectLine = "ACS Staffing Agency WE: " & weekending
     FileName = "ACS Agency Weekly Hours"
     sendTo = "lgarcia@acsstaffinginc.com;eduarte@acsstaffinginc.com;mrivera@acsstaffinginc.com"
+    
+    ' Call procedure to creat email draft
     create_email FileName, subjectLine, weekending, sendTo
     
 End Sub
+  
+'
+' VBA Procedure that attaches the appropriate agency's WORKSHEET from master file WORKBOOK to an email with specified recipients
+' DOES NOT SEND EMAIL - just displays the draft
+'
+' @partners = default value of 0, but = 1 if called from Partners procedure (there are two worksheets to send to Partners Personnel rather than one)
+'
 
 Private Sub create_email(agencyFileName As String, subjectLine As String, weekending As String, sendTo As String, Optional partners As Integer = 0)
-    'BA code: send current worksheet as attachment from Excel
-    'For Tips see: http://www.rondebruin.nl/win/winmail/Outlook/tips.htm
+    
+    ' BA code: send current worksheet as attachment from Excel
+    ' For Tips see: http://www.rondebruin.nl/win/winmail/Outlook/tips.htm
     Dim FileExtStr As String
     Dim FileFormatNum As Long
     Dim Sourcewb As Workbook
@@ -518,7 +554,7 @@ Private Sub create_email(agencyFileName As String, subjectLine As String, weeken
     Dim TempFileName As String
     Dim OutApp As Object
     Dim OutMail As Object
-
+    
     With Application
         .ScreenUpdating = False
         .EnableEvents = False
@@ -526,17 +562,19 @@ Private Sub create_email(agencyFileName As String, subjectLine As String, weeken
 
     Set Sourcewb = ActiveWorkbook
     
-    'Copy the ActiveSheet to a new workbook
+    ' Copy the ActiveSheet to a new workbook
     ActiveSheet.Copy
     Set Destwb = ActiveWorkbook
     
+    ' @WEwithDashes - weekending value with dash(-) as delimeter
+    ' Rename new sheet on new workbook to WEwithDashes
     Dim WEwithDashes As String
     WEwithDashes = Replace(weekending, "/", "-")
     Sheets(1).Name = WEwithDashes
     
-    'Copy the additional worksheet to a new workbook if partners
+    ' !!Only for partners!!
+    ' Copy additional partners worksheet to a seperate new workbook
     If partners <> 0 Then
-        'Activate the sourceWB
         Sourcewb.Activate
         Sheets("Partners T3 FINAL").Copy
         Set Destwb2 = ActiveWorkbook
@@ -544,39 +582,40 @@ Private Sub create_email(agencyFileName As String, subjectLine As String, weeken
     End If
     
     'Determine the Excel version and file extension/format
-    With Destwb
-        If Val(Application.Version) < 12 Then
-            'You use Excel 97-2003
-            FileExtStr = ".xls": FileFormatNum = -4143
-        Else
-            'You use Excel 2007-2016
-            Select Case Sourcewb.FileFormat
-            Case 51: FileExtStr = ".xlsx": FileFormatNum = 51
-            Case 52:
-                If .HasVBProject Then
-                    FileExtStr = ".xlsm": FileFormatNum = 52
-                Else
-                    FileExtStr = ".xlsx": FileFormatNum = 51
-                End If
-            Case 56: FileExtStr = ".xls": FileFormatNum = 56
-            Case Else: FileExtStr = ".xlsb": FileFormatNum = 50
-            End Select
-        End If
-    End With
+'    With Destwb
+'        If Val(Application.Version) < 12 Then
+'            'You use Excel 97-2003
+'            FileExtStr = ".xls": FileFormatNum = -4143
+'        Else
+'            'You use Excel 2007-2016
+'            Select Case Sourcewb.FileFormat
+'            Case 51: FileExtStr = ".xlsx": FileFormatNum = 51
+'            Case 52:
+'                If .HasVBProject Then
+'                    FileExtStr = ".xlsm": FileFormatNum = 52
+'                Else
+'                    FileExtStr = ".xlsx": FileFormatNum = 51
+'                End If
+'            Case 56: FileExtStr = ".xls": FileFormatNum = 56
+'            Case Else: FileExtStr = ".xlsb": FileFormatNum = 50
+'            End Select
+'        End If
+'    End With
     
     
+    ' Set the Excel File Extension and Format number
     FileExtStr = ".xlsx"
     FileFormatNum = 51
 
-    'Save the new workbook/Mail it/Delete it
+    'Save the new workbook>Mail it>Delete it
     TempFilePath = Environ$("temp") & "\"
     TempFileName = agencyFileName
 
     Set OutApp = CreateObject("Outlook.Application")
     Set OutMail = OutApp.CreateItem(0)
     
-    
-    If partners = 0 Then        ' this is the default
+    ' This IF/ELSE block is where changes to CC and BCC recipients take place
+    If partners = 0 Then
         With Destwb
             .SaveAs TempFilePath & TempFileName & FileExtStr, FileFormat:=FileFormatNum
             On Error Resume Next
@@ -590,16 +629,13 @@ Private Sub create_email(agencyFileName As String, subjectLine As String, weeken
                     .Attachments.Add Destwb.FullName
                     'You can add other files also like this
                     '.Attachments.Add ("C:\test.txt")
-                    .DISPLAY   'or use .Display
+                    .DISPLAY
                 End With
             On Error GoTo 0
             .Close savechanges:=False
         End With
 
-        'Delete the file you have send
-        Kill TempFilePath & TempFileName & FileExtStr
-
-    Else    'if partners here we need to add two workbooks
+    Else    ' Partners we need to add two workbooks
         With Destwb
             .SaveAs TempFilePath & TempFileName & FileExtStr, FileFormat:=FileFormatNum
             On Error Resume Next
@@ -617,7 +653,7 @@ Private Sub create_email(agencyFileName As String, subjectLine As String, weeken
                     .Attachments.Add Destwb2.FullName
                     'You can add other files also like this
                     '.Attachments.Add ("C:\test.txt")
-                    .DISPLAY   'or use .Display
+                    .DISPLAY
                 End With
                 On Error GoTo 0
                 .Close savechanges:=False
@@ -626,7 +662,7 @@ Private Sub create_email(agencyFileName As String, subjectLine As String, weeken
             .Close savechanges:=False
         End With
 
-        'Delete the file you have send
+        'delete the temporary files
         Kill TempFilePath & TempFileName & FileExtStr
         Kill TempFilePath & "AES (Partners Personnel) 3.xlsx"
     End If
@@ -645,7 +681,7 @@ End Sub
 '-----------------------------------------------------------------------END ACS----BEGIN JAM------------------------------------------------------------------------------
 Private Sub JAM(weekending As String, startRow As Integer, endRow As Integer, lastPivotRow As Integer, _
                 lastPivotColumn As String, STcol As Integer, OTcol As Integer, DTcol As Integer, SICK As _
-                Integer, vacayCol As Integer, costCenter2() As String)
+                Integer, vacayCol As Integer, costcenter2() As String)
     JAM_setup weekending
     
     '''
@@ -669,7 +705,7 @@ Private Sub JAM(weekending As String, startRow As Integer, endRow As Integer, la
     JAM_emp_IDs(0) = Range("B" & startRow).Value    'Emp ID#
     
     For i = 0 To 7
-        If Range("H" & startRow).Value = costCenter2(i) Then
+        If Range("H" & startRow).Value = costcenter2(i) Then
             If i = 2 Or i = 0 Then 'Billing or Accounting Cost Center
                 JAM_remarks(0) = "Office-B"
             ElseIf i = 4 Then 'Customer Service
@@ -700,7 +736,7 @@ Private Sub JAM(weekending As String, startRow As Integer, endRow As Integer, la
             
             'Determine if remark is Office or Warehouse
             For m = 0 To 7
-                If Range("H" & i).Value = costCenter2(m) Then
+                If Range("H" & i).Value = costcenter2(m) Then
                     If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
                         JAM_remarks(JAM_total) = "Office-B"
                     ElseIf m = 4 Then 'Customer Service
@@ -742,40 +778,60 @@ Private Sub JAM(weekending As String, startRow As Integer, endRow As Integer, la
         endJam = endJam + 1
     Next i
    
-    'Total to bill formula
-    Range("K9").Formula2 = "=((D9*C9)+(E9*C9*1.5)+(F9*C9*2)+(I9*C9))*$L$1"
-    Range("K9").AutoFill Destination:=Range("K9:K" & endJam - 1), Type:=xlFillDefault
+   '
+   ' Populate formulas; autofill if there is more than one employee
+   '
    
-    'Rate formula
-    Range("C9").Formula2 = "=INDEX('Export File'!$D$2:$D$" & endRow & ",MATCH(1,($A9='Export File'!$A$2:$A$" & endRow & ")*(""Regular""='Export File'!$C$2:$C$" & endRow & "),0))"
-    Range("C9").AutoFill Destination:=Range("C9:C" & endJam - 1), Type:=xlFillDefault
-    
-    'Populate ST HOURS
-    Range("D9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & STcol & ",FALSE)"
-    Range("D9").AutoFill Destination:=Range("D9:D" & endJam - 1), Type:=xlFillDefault
-    
-    'Populate OT HOURS
-    Range("E9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & OTcol & ",FALSE)"
-    Range("E9").AutoFill Destination:=Range("E9:E" & endJam - 1), Type:=xlFillDefault
-    
-    If DTcol <> 55 Then
-        'Populate DT HOURS
-        Range("F9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & DTcol & ",FALSE)"
-        Range("F9").AutoFill Destination:=Range("F9:F" & endJam - 1), Type:=xlFillDefault
+   If endJam - 1 = startJam Then 'if there is only one employee
+        Range("K9").Formula2 = "=((D9*C9)+(E9*C9*1.5)+(F9*C9*2)+(I9*C9))*$L$1"
+        Range("C9").Formula2 = "=INDEX('Export File'!$D$2:$D$" & endRow & ",MATCH(1,($A9='Export File'!$A$2:$A$" & endRow & ")*(""Regular""='Export File'!$C$2:$C$" & endRow & "),0))"
+        Range("D9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & STcol & ",FALSE)"
+        Range("E9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & OTcol & ",FALSE)"
+        If DTcol <> 55 Then
+            Range("F9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & DTcol & ",FALSE)"
+        End If
+        If SICK <> 55 Then
+            Range("H9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & SICK & ",FALSE)"
+        End If
+        If vacayCol <> 55 Then
+             Range("G9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & vacayCol & ",FALSE)"
+        End If
+    Else
+   
+         'Total to bill formula
+         Range("K9").Formula2 = "=((D9*C9)+(E9*C9*1.5)+(F9*C9*2)+(I9*C9))*$L$1"
+         Range("K9").AutoFill Destination:=Range("K9:K" & endJam - 1), Type:=xlFillDefault
+        
+         'Rate formula
+         Range("C9").Formula2 = "=INDEX('Export File'!$D$2:$D$" & endRow & ",MATCH(1,($A9='Export File'!$A$2:$A$" & endRow & ")*(""Regular""='Export File'!$C$2:$C$" & endRow & "),0))"
+         Range("C9").AutoFill Destination:=Range("C9:C" & endJam - 1), Type:=xlFillDefault
+         
+         'Populate ST HOURS
+         Range("D9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & STcol & ",FALSE)"
+         Range("D9").AutoFill Destination:=Range("D9:D" & endJam - 1), Type:=xlFillDefault
+         
+         'Populate OT HOURS
+         Range("E9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & OTcol & ",FALSE)"
+         Range("E9").AutoFill Destination:=Range("E9:E" & endJam - 1), Type:=xlFillDefault
+         
+         If DTcol <> 55 Then
+             'Populate DT HOURS
+             Range("F9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & DTcol & ",FALSE)"
+             Range("F9").AutoFill Destination:=Range("F9:F" & endJam - 1), Type:=xlFillDefault
+         End If
+         
+         If SICK <> 55 Then
+             'Populate SICK
+             Range("H9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & SICK & ",FALSE)"
+             Range("H9").AutoFill Destination:=Range("H9:H" & endJam - 1), Type:=xlFillDefault
+         End If
+         
+         If vacayCol <> 55 Then
+             'Populate VACAY HOURS
+             Range("G9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & vacayCol & ",FALSE)"
+             Range("G9").AutoFill Destination:=Range("G9:G" & endJam - 1), Type:=xlFillDefault
+         End If
     End If
-    
-    If SICK <> 55 Then
-        'Populate SICK
-        Range("H9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & SICK & ",FALSE)"
-        Range("H9").AutoFill Destination:=Range("H9:H" & endJam - 1), Type:=xlFillDefault
-    End If
-    
-    If vacayCol <> 55 Then
-        'Populate VACAY HOURS
-        Range("G9").Formula2 = "=VLOOKUP($A9,Pivot!$A$5:$" & lastPivotColumn & "$" & lastPivotRow & "," & vacayCol & ",FALSE)"
-        Range("G9").AutoFill Destination:=Range("G9:G" & endJam - 1), Type:=xlFillDefault
-    End If
-    
     
     Range("C9:L" & endJam).NumberFormat = "0.00"
    
@@ -818,7 +874,7 @@ Private Sub JAM(weekending As String, startRow As Integer, endRow As Integer, la
 End Sub
 Private Sub OneWay(weekending As String, startr As Integer, endr As Integer, lastPivotRow As Integer, _
                     lastPivotColumn As String, STcol As Integer, OTcol As Integer, DTcol As Integer, _
-                    SICK As Integer, vacayCol As Integer, costCenter2() As String)
+                    SICK As Integer, vacayCol As Integer, costcenter2() As String)
  
     OneWay_Setup (weekending)
     oneway_headerBorders
@@ -845,7 +901,7 @@ Private Sub OneWay(weekending As String, startr As Integer, endr As Integer, las
     
     'remarks
     For m = 0 To 7
-        If Range("H" & startr).Value = costCenter2(m) Then
+        If Range("H" & startr).Value = costcenter2(m) Then
             If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
                 OneWay_remarks(0) = "Office-B"
             ElseIf m = 4 Then 'Customer Service
@@ -874,7 +930,7 @@ Private Sub OneWay(weekending As String, startr As Integer, endr As Integer, las
             
             'remarks
             For m = 0 To 7
-                If Range("H" & i).Value = costCenter2(m) Then
+                If Range("H" & i).Value = costcenter2(m) Then
                     If m = 2 Or m = 0 Then 'Billing or Accounting Cost Center
                         OneWay_remarks(OneWay_total) = "Office-B"
                     ElseIf m = 4 Then 'Customer Service
@@ -998,7 +1054,7 @@ Private Sub OneWay(weekending As String, startr As Integer, endr As Integer, las
     Dim subjectLine As String, FileName As String, sendTo As String
     subjectLine = "Oneway Staffing WE: " & weekending
     FileName = "Oneway Staffing Weekly Hours"
-    sendTo = "yaniras@onewaystaffing.net;arodriguez@onewaystaffing.net;jperez@alternacs.com"
+    sendTo = "yaniras@onewaystaffing.net;susanc@onewaystaffing.net;jperez@alternacs.com"
     create_email FileName, subjectLine, weekending, sendTo
     
 End Sub
@@ -1544,24 +1600,32 @@ Private Sub Resource(weekending As String, startr As Integer, endr As Integer, l
     
 End Sub
 
-
+'
+' Calculate totals after all employee information has been added to the appropriate agency sheet
+' Applicable for ACS, JAM, OneWay
+' @startr - the start row of employee values
+' @endr - the end row of employee values + 1
+'
 Private Sub calculateTotals(start As Integer, endr As Integer)
     Range("A" & endr) = "TOTAL"
     
+    ' Enter total formula in first cell and autofill
     Range("D" & endr).Formula2 = "=SUM(D$" & start & ":D$" & endr - 1 & ")"
     Range("D" & endr).AutoFill Destination:=Range("D" & endr & ":K" & endr), Type:=ylFillDefault
     
-    Range("A" & endr & ":K" & endr).Font.Bold = True     'BOLD TOTALS
+    ' BOLD TOTALS
+    Range("A" & endr & ":K" & endr).Font.Bold = True
     
+    'Set Number format to Accounting/Currency
     Range("C8:K" & endr).Select
     Selection.NumberFormat = "_(* #,##0.00_);_(* (#,##0.00);_(* ""-""??_);_(@_)"
+    
 End Sub
 
 
     
 Private Sub ACS_Setup_Part1(weekending As String)
     Worksheets("ACS Staffing").Activate
-    
     Range("A2") = "TEL (562) 376-9424"
     Range("A3").Select
     ActiveCell.FormulaR1C1 = "FAX (562) 299-5527"
@@ -1693,7 +1757,8 @@ Private Sub ACS_Setup_Part2()
     ActiveCell.FormulaR1C1 = "1.3214"
     Range("K124").Select
     ActiveWindow.SmallScroll Down:=-153
-
+'
+'
 ' Add borders to final tables after names have been placed and rowcounts have been initialized
 '
 '
@@ -2369,26 +2434,23 @@ End Sub
 
 Private Sub Payroll_Sort()
 '
-' Payroll_Sort Macro
-' Renames current Sheet to Export File
-' Sort the initial file outputted by UKG by agency and then tier and then by name
+' Renames initial Sheet outputted by UKG to Export File
+' Sort by agency, tier, employee name
 '
-
     'Dynamic last row
-    Dim lastrow As Integer
-    
-    lastrow = Range("A1").End(xlDown).row
+    Dim lastRow As Integer
+    lastRow = Range("A1").End(xlDown).row
     
     ActiveSheet.Name = "Export File"
-    Range("A1:I" & lastrow).Select
+    Range("A1:I" & lastRow).Select
     Range("D7").Activate
     Application.CutCopyMode = False
     ActiveWorkbook.Worksheets("Export File").Sort.SortFields.Clear
     ActiveWorkbook.Worksheets("Export File").Sort.SortFields.Add2 Key:=Range( _
-        "G2:G" & lastrow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
+        "G2:G" & lastRow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
         xlSortNormal
     With ActiveWorkbook.Worksheets("Export File").Sort
-        .SetRange Range("A1:I" & lastrow)
+        .SetRange Range("A1:I" & lastRow)
         .Header = xlYes
         .MatchCase = False
         .Orientation = xlTopToBottom
@@ -2397,13 +2459,13 @@ Private Sub Payroll_Sort()
     End With
     ActiveWorkbook.Worksheets("Export File").Sort.SortFields.Clear
     ActiveWorkbook.Worksheets("Export File").Sort.SortFields.Add2 Key:=Range( _
-        "G2:G" & lastrow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
+        "G2:G" & lastRow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
         xlSortNormal
     ActiveWorkbook.Worksheets("Export File").Sort.SortFields.Add2 Key:=Range( _
-        "I2:I" & lastrow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
+        "I2:I" & lastRow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
         xlSortNormal
     With ActiveWorkbook.Worksheets("Export File").Sort
-        .SetRange Range("A1:I" & lastrow)
+        .SetRange Range("A1:I" & lastRow)
         .Header = xlYes
         .MatchCase = False
         .Orientation = xlTopToBottom
@@ -2412,16 +2474,16 @@ Private Sub Payroll_Sort()
     End With
      ActiveWorkbook.Worksheets("Export File").Sort.SortFields.Clear
     ActiveWorkbook.Worksheets("Export File").Sort.SortFields.Add2 Key:=Range( _
-        "G2:G" & lastrow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
+        "G2:G" & lastRow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
         xlSortNormal
     ActiveWorkbook.Worksheets("Export File").Sort.SortFields.Add2 Key:=Range( _
-        "I2:I" & lastrow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
+        "I2:I" & lastRow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
         xlSortNormal
     ActiveWorkbook.Worksheets("Export File").Sort.SortFields.Add2 Key:=Range( _
-        "A2:A" & lastrow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
+        "A2:A" & lastRow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
         xlSortNormal
     With ActiveWorkbook.Worksheets("Export File").Sort
-        .SetRange Range("A1:I" & lastrow)
+        .SetRange Range("A1:I" & lastRow)
         .Header = xlYes
         .MatchCase = False
         .Orientation = xlTopToBottom
@@ -2495,9 +2557,10 @@ Private Sub PivotTable(lastRowFromExportFile As Integer)
 End Sub
 Private Function totalOT_Pivot(lastPivotRow As Integer, lastPivotColumn As Integer, weekOTColumn As String, dailyOTcolumn As String) As String
 '
+' Adds an additional column to the pivot table for total overtime
 ' calcTotalOverTIme_Pivot Macro
-' returns the column number of the total overtime
-
+' returns the column number of the total overtime (last column)
+'
 '
     Dim totalOTcol As String
     Dim lastPivotCol As String
@@ -2534,11 +2597,11 @@ Private Function totalOT_Pivot(lastPivotRow As Integer, lastPivotColumn As Integ
     
 End Function
 
-Private Sub Add_PPT1_Borders(lastrow As Integer)
+Private Sub Add_PPT1_Borders(lastRow As Integer)
 
 ' this procedure is only for Partners Personnel Tier 1
 
- Range("A7:R" & lastrow).Select
+ Range("A7:R" & lastRow).Select
     Selection.Borders(xlDiagonalDown).LineStyle = xlNone
     Selection.Borders(xlDiagonalUp).LineStyle = xlNone
     With Selection.Borders(xlEdgeLeft)
@@ -2581,10 +2644,10 @@ Private Sub Add_PPT1_Borders(lastrow As Integer)
     Cells.EntireColumn.AutoFit
 End Sub
 
-Private Sub Add_PPT3_Borders(lastrow As Integer)
+Private Sub Add_PPT3_Borders(lastRow As Integer)
 'this procedure is only for Partners Tier 3
 
- Range("A7:W" & lastrow).Select
+ Range("A7:W" & lastRow).Select
     Selection.Borders(xlDiagonalDown).LineStyle = xlNone
     Selection.Borders(xlDiagonalUp).LineStyle = xlNone
     With Selection.Borders(xlEdgeLeft)
@@ -2627,13 +2690,12 @@ Private Sub Add_PPT3_Borders(lastrow As Integer)
     Cells.EntireColumn.AutoFit
 End Sub
 
-Private Sub Add_border_to_single_table(startRow As Integer, lastrow As Integer)
+Private Sub Add_border_to_single_table(startRow As Integer, lastRow As Integer)
 '
 ' Can be used for all agencies - just make sure to border any and all headers in the intial setup procedure
 '
-
 '
-    Range("A" & startRow & ":L" & lastrow).Select
+    Range("A" & startRow & ":L" & lastRow).Select
     Selection.Borders(xlDiagonalDown).LineStyle = xlNone
     Selection.Borders(xlDiagonalUp).LineStyle = xlNone
     With Selection.Borders(xlEdgeLeft)
@@ -2862,7 +2924,7 @@ Private Sub Partners_Setup_PT1(weekending As String, tier As Integer)
     
 
 End Sub
-Private Sub PartnersT3_Supp(lastrow As Integer)
+Private Sub PartnersT3_Supp(lastRow As Integer)
 '
 ' Partners3_Supplemental Macro
 '
@@ -2892,7 +2954,7 @@ Private Sub PartnersT3_Supp(lastrow As Integer)
     Selection.Delete Shift:=xlToLeft
     Range("R8").Select
     
-    Range("N7:N" & lastrow).Select
+    Range("N7:N" & lastRow).Select
     With Selection.Interior
         .Pattern = xlSolid
         .PatternColorIndex = xlAutomatic
@@ -2900,7 +2962,7 @@ Private Sub PartnersT3_Supp(lastrow As Integer)
         .TintAndShade = 0
         .PatternTintAndShade = 0
     End With
-    Range("R7:R" & lastrow).Select
+    Range("R7:R" & lastRow).Select
     With Selection.Interior
         .Pattern = xlSolid
         .PatternColorIndex = xlAutomatic
@@ -3203,5 +3265,59 @@ Private Sub Resource_Setup(weekending As String)
     Cells.Select
     Cells.EntireColumn.AutoFit
     Range("D8").Select
+End Sub
+
+' ADDED 8/28/2022
+' ADDS NEW RECLASSIFICATION CATEGORY COLUMN TO EXPORT FILE TAB  WHICH DEPENDS ON THE VALUE OF COST CENTER 2
+' INTENDED FOR THE PURPOSE OF REPORTING - PER VICKIE'S REQUEST ON 8/23/22
+Private Sub addReclassColumn()
+
+    'ADD NEW COLUMN HEADER
+    Range("J1").Value = "Reclassification"
+
+    'GET LAST ROW OF EXPORT FILE
+    Dim exportFileEndRow As Integer
+    exportFileEndRow = Range("A1").End(xlDown).row
+
+    ' @costCenter2 - holds all clerical(non WHSE) cost centers
+    ' @reclass - reclassification categories
+    Dim costcenter2Reclass(7, 1) As String  '8 total
+    
+    'cost center 2
+    costcenter2Reclass(0, 0) = "Accounting"
+    costcenter2Reclass(1, 0) = "Admin"
+    costcenter2Reclass(2, 0) = "Billing"
+    costcenter2Reclass(3, 0) = "Billing Write Up"
+    costcenter2Reclass(4, 0) = "Customer Service"
+    costcenter2Reclass(5, 0) = "Dispatch"
+    costcenter2Reclass(6, 0) = "Office"
+    costcenter2Reclass(7, 0) = "Yard Office"
+    
+    'reclassification - this corresponds with the data above
+    costcenter2Reclass(0, 1) = "Clerical - Admin"
+    costcenter2Reclass(1, 1) = "Clerical - Admin"
+    costcenter2Reclass(2, 1) = "Clerical - Admin"
+    costcenter2Reclass(3, 1) = "Clerical - Admin"
+    costcenter2Reclass(4, 1) = "Clerical - Customer Service"
+    costcenter2Reclass(5, 1) = "Clerical - Trucking"
+    costcenter2Reclass(6, 1) = "Clerical - Admin"
+    costcenter2Reclass(7, 1) = "Clerical - Admin"
+    
+
+    
+    'H is cost center 2 column
+    'J is new column
+    For i = 2 To exportFileEndRow
+        For j = 0 To 7
+            If Range("H" & i).Value = costcenter2Reclass(j, 0) Then
+                Range("J" & i) = costcenter2Reclass(j, 1)
+                Exit For
+            End If
+           Range("J" & i) = "Warehouse Workers"
+    
+        Next j
+    Next i
+                    
+    
 End Sub
 
